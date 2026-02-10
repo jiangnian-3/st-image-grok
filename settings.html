@@ -1,0 +1,53 @@
+<div class="inline-drawer">
+    <div class="inline-drawer-toggle inline-drawer-header">
+        <b>Grok Imagine 文生图</b>
+        <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
+    </div>
+    <div class="inline-drawer-content">
+        <div class="flex-container flexnowrap">
+            <label for="grok_insert_type" class="flex1">图片插入方式</label>
+            <select id="grok_insert_type" class="text_pole widthNatural margin0">
+                <option value="disabled">禁用</option>
+                <option value="inline">插入当前消息</option>
+                <option value="replace">行内替换标签</option>
+            </select>
+        </div>
+        <hr><b>Grok API</b>
+        <div><label for="grok_api_url">API地址</label><input id="grok_api_url" type="text" class="text_pole" /></div>
+        <div><label for="grok_api_key">API Key</label><input id="grok_api_key" type="password" class="text_pole" placeholder="sk-..." /></div>
+        <div><label for="grok_model">模型</label><input id="grok_model" type="text" class="text_pole" value="grok-imagine-1.0" /></div>
+        <hr><b>标签格式</b>
+        <div class="flex-container flexnowrap">
+            <label for="grok_tag_format" class="flex1">格式</label>
+            <select id="grok_tag_format" class="text_pole widthNatural margin0">
+                <option value="pic">pic标签</option>
+                <option value="image">image标签(项目C)</option>
+                <option value="custom">自定义</option>
+            </select>
+        </div>
+        <div><label for="grok_injection_regex">正则</label><textarea id="grok_injection_regex" class="text_pole textarea_compact" rows="2"></textarea></div>
+        <hr><b>风格预设</b>
+        <div class="flex-container flexnowrap"><label for="grok_preset_select" class="flex1">预设</label><select id="grok_preset_select" class="text_pole widthNatural margin0"></select></div>
+        <div class="flex-container flexnowrap" style="gap:5px;margin-top:5px;">
+            <div id="grok_preset_save" class="menu_button"><i class="fa-solid fa-save"></i></div>
+            <div id="grok_preset_delete" class="menu_button"><i class="fa-solid fa-trash"></i></div>
+            <div id="grok_preset_export" class="menu_button"><i class="fa-solid fa-file-export"></i></div><div id="grok_preset_import" class="menu_button"><i class="fa-solid fa-file-import"></i></div><input type="file" id="grok_preset_import_file" accept=".json" style="display:none;">
+        </div>
+        <div><label for="grok_prompt_prefix">固定正面前缀</label><textarea id="grok_prompt_prefix" class="text_pole textarea_compact" rows="2"></textarea></div>
+        <div><label for="grok_prompt_suffix">固定正面后缀</label><textarea id="grok_prompt_suffix" class="text_pole textarea_compact" rows="2"></textarea></div>
+        <hr><b>提示词注入</b>
+        <div class="flex-container flexnowrap"><label class="checkbox_label" for="grok_injection_enabled"><span>启用注入</span><input type="checkbox" id="grok_injection_enabled" class="checkbox"></label></div>
+        <div><label for="grok_injection_prompt">注入提示词</label><textarea id="grok_injection_prompt" class="text_pole textarea_compact" rows="6"></textarea></div>
+        <div class="flex-container flexnowrap"><label for="grok_injection_position" class="flex1">位置</label><select id="grok_injection_position" class="text_pole widthNatural margin0"><option value="deep_system">@D System</option><option value="deep_user">@D User</option><option value="deep_assistant">@D Assistant</option></select></div>
+        <div class="flex-container flexnowrap"><label for="grok_injection_depth" class="flex1">深度(0=末尾)</label><input id="grok_injection_depth" class="text_pole widthUnset" type="number" min="0" max="100" value="0"></div>
+        <div style="margin:8px 0;"><label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="grok_stream_pregen" /><span>⚡ 流式预生成（AI输出时提前生图）</span></label></div><hr><b>缓存</b>
+        <div class="flex-container flexnowrap"><label for="grok_cache_days" class="flex1">保留</label><select id="grok_cache_days" class="text_pole widthNatural margin0"><option value="1">1天</option><option value="3">3天</option><option value="7" selected>7天</option><option value="14">两周</option><option value="30">月</option><option value="0">永不</option></select></div>
+        <div style="margin-top:5px;"><div id="grok_clean_cache" class="menu_button"><i class="fa-solid fa-broom"></i> 清理</div></div>
+        <div style="margin-top:5px;"><div id="grok_manage_images" class="menu_button"><i class="fa-solid fa-images"></i> 图片管理</div></div>
+        <hr><b>日志</b>
+        <div id="grok_log_area" style="max-height:200px;overflow-y:auto;background:var(--SmartThemeBlurTintColor,#1a1a1a);border-radius:6px;padding:8px;font-size:11px;color:#aaa;margin-top:5px;font-family:monospace;">暂无</div>
+        <div class="flex-container flexnowrap" style="gap:5px;margin-top:5px;">
+            <div id="grok_copy_log" class="menu_button"><i class="fa-solid fa-copy"></i></div>
+            <div id="grok_download_log" class="menu_button"><i class="fa-solid fa-download"></i></div>
+            <div id="grok_clear_log" class="menu_button"><i class="fa-solid fa-eraser"></i></div></div></div>
+</div>

@@ -1,0 +1,11 @@
+{
+    "display_name": "Grok Imagine 文生图",
+    "requires": [],
+    "optional": [],
+    "js": "index.js",
+    "css": "",
+    "author": "grok-imagine",
+    "version": "2.5.0",
+    "homePage": "",
+    "auto_update": true
+}

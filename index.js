@@ -456,7 +456,7 @@ $(function(){(async function(){
     await loadSettings();await createSettings(html);
     console.log('[grok] presets='+JSON.stringify(Object.keys(getAllP())));
     console.log('[grok] customPresets='+JSON.stringify(Object.keys(extension_settings[EXT].customPresets||{})));
-    addLog('v2.5.1 FOLDER='+FOLDER);toastr.info('预设: '+Object.keys(getAllP()).join(', '));setTimeout(function(){startObs();wrapAll();},500);
+    addLog('v2.5.1');setTimeout(function(){startObs();wrapAll();},500);
     }catch(e){console.error('[grok] INIT FAIL:',e);}
 })();});
 

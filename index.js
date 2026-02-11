@@ -162,7 +162,10 @@ function showImageManager(){
     var prevBtn=$('<button>\u25C0</button>').css({padding:'8px 16px',borderRadius:'8px',border:'none',background:'rgba(255,255,255,0.12)',color:'#ccc',fontSize:'14px',cursor:'pointer'});
     var pageText=$('<span></span>').css({color:'#ccc',fontSize:'13px',minWidth:'60px',textAlign:'center'});
     var nextBtn=$('<button>\u25B6</button>').css({padding:'8px 16px',borderRadius:'8px',border:'none',background:'rgba(255,255,255,0.12)',color:'#ccc',fontSize:'14px',cursor:'pointer'});
-    pager.append(prevBtn).append(pageText).append(nextBtn);
+    var jumpInput=$('<input>').attr({type:'number',min:1,max:totalPages,placeholder:'#'}).css({width:'48px',padding:'6px',borderRadius:'8px',border:'1px solid #555',background:'#1a1a1a',color:'#ccc',fontSize:'13px',textAlign:'center'});
+    var jumpBtn=$('<button>跳转</button>').css({padding:'6px 12px',borderRadius:'8px',border:'none',background:'rgba(255,255,255,0.12)',color:'#ccc',fontSize:'13px',cursor:'pointer'});
+    jumpBtn.on('click',function(){var v=parseInt(jumpInput.val());if(v>=1&&v<=totalPages){page=v-1;renderPage();}else{toastr.warning('1-'+totalPages);}});
+    pager.append(prevBtn).append(pageText).append(nextBtn).append(jumpInput).append(jumpBtn);
     ov.append(pager);
     function renderPage(){
         grid.empty();grid.scrollTop(0);
@@ -445,8 +448,7 @@ async function handleMsg(){
                         var hist=getH(mesIdx,i);hist.imgs.push(result);hist.prms.push(imgP);hist.idx=hist.imgs.length-1;saveHistory(mesIdx,i,hist);
                         var simpleImg='<img class="grok-gen-img" src="'+result+'" data-grok-prompt="'+esc(imgP)+'" data-grok-mid="'+mesIdx+'" data-grok-pid="'+i+'">';
                         msg.mes=msg.mes.replace(tag,simpleImg);
-                        updateMessageBlock(mesIdx,msg);
-                        setTimeout(wrapAll,100);
+                        updateMessageBlock(mesIdx,msg);setTimeout(wrapAll,300);setTimeout(wrapAll,800);
                         await eventSource.emit(event_types.MESSAGE_UPDATED,mesIdx);await ctx.saveChat();ok++;
                     }
                 }catch(ie){
@@ -461,7 +463,7 @@ async function handleMsg(){
                     }toastr.warning('fail#'+(i+1));
                 }
             }
-            addLog(ok+' done');if(ok>0)toastr.success(ok+' done');
+            addLog(ok+' done');if(ok>0){toastr.success(ok+' done');setTimeout(wrapAll,500);setTimeout(wrapAll,1500);}
         }catch(e){toastr.error('err:'+e.message);}
     },0);
 }

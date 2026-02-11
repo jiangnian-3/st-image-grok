@@ -400,7 +400,7 @@ eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY,async function(ev){try{v
 eventSource.on(event_types.MESSAGE_RECEIVED,handleMsg);
 async function handleMsg(){
     var _savedPG=Object.assign({},_preGens);var _wasPG=_preGenActive;
-    _streamBuf='';_preGenActive=false;_preGens={};_streamLastLen=0;
+    _streamBuf='';_preGenActive=false;_preGens={};_streamLastLen=0;_preGenRunning=0;if(_streamDebounce){clearTimeout(_streamDebounce);_streamDebounce=null;}
     var s=extension_settings[EXT];if(!s||s.insertType===IT.DISABLED)return;
     if(_wasPG)addLog('\u26a1msg received, '+Object.keys(_savedPG).length+' pre-gens available');
     var ctx=getContext(),mesIdx=ctx.chat.length-1,msg=ctx.chat[mesIdx];
@@ -473,20 +473,11 @@ var _streamBuf='';
 var _preGens={};
 var _preGenActive=false;
 var _streamLastLen=0;
-
-function _resetPreGen(){
-    var keys=Object.keys(_preGens);
-    if(keys.length>0)addLog('pre-gen reset, had '+keys.length+' entries');
-    _streamBuf='';_preGens={};_preGenActive=false;_streamLastLen=0;
-}
-
-eventSource.on(event_types.STREAM_TOKEN_RECEIVED,function(data){
+var _streamDebounce=null;
+var _preGenRunning=0;
+function _doStreamMatch(){
     var s=extension_settings[EXT];
-    if(!s||s.insertType===IT.DISABLED||s.streamPregen===false)return;
-    _preGenActive=true;
-    var tok=(typeof data==='string')?data:(data&&data.token?data.token:'');
-    if(!tok)return;
-    _streamBuf=(tok.length>_streamBuf.length+50)?tok:(_streamBuf+tok);if(_streamBuf.length-_streamLastLen<40)return;_streamLastLen=_streamBuf.length;
+    if(!s)return;
     var rxStr=s.promptInjection.regex;if(!rxStr)return;
     var rx;try{rx=regexFromString(rxStr);}catch(e){return;}
     var isIF=(s.tagFormat==='image');
@@ -495,6 +486,7 @@ eventSource.on(event_types.STREAM_TOKEN_RECEIVED,function(data){
     else{var m=_streamBuf.match(rx);matches=m?[m]:[];}
     if(!matches.length)return;
     for(var i=0;i<matches.length;i++){
+        if(_preGenRunning>=2)break;
         var match=matches[i];
         var rawP=(typeof match[1]==='string')?match[1]:'';
         if(!rawP.trim())continue;
@@ -502,19 +494,42 @@ eventSource.on(event_types.STREAM_TOKEN_RECEIVED,function(data){
         if(!imgP.trim())continue;
         var key=imgP.trim();
         if(_preGens[key])continue;
-        addLog('\u26a1stream pre-gen #'+(i+1)+': '+key.substring(0,60));
+        addLog('\u26a1pre-gen #'+(i+1)+': '+key.substring(0,60));
+        _preGenRunning++;
         (function(k){
             var prom=genImg(k);
             _preGens[k]={promise:prom,done:false,result:null};
             prom.then(function(r){
                 _preGens[k].done=true;_preGens[k].result=r;
+                _preGenRunning--;
                 addLog('\u26a1pre-gen done: '+k.substring(0,40));
             }).catch(function(e){
                 _preGens[k].done=true;_preGens[k].result=null;
+                _preGenRunning--;
                 addLog('\u26a1pre-gen fail: '+e.message);
             });
         })(key);
     }
+}
+
+function _resetPreGen(){
+    var keys=Object.keys(_preGens);
+    if(keys.length>0)addLog('pre-gen reset, had '+keys.length+' entries');
+    _streamBuf='';_preGens={};_preGenActive=false;_streamLastLen=0;_preGenRunning=0;if(_streamDebounce){clearTimeout(_streamDebounce);_streamDebounce=null;}
+}
+
+eventSource.on(event_types.STREAM_TOKEN_RECEIVED,function(data){
+    var s=extension_settings[EXT];
+    if(!s||s.insertType===IT.DISABLED||s.streamPregen===false)return;
+    _preGenActive=true;
+    var tok=(typeof data==='string')?data:(data&&data.token?data.token:'');
+    if(!tok)return;
+    _streamBuf=(tok.length>_streamBuf.length+50)?tok:(_streamBuf+tok);
+    if(_streamDebounce)return;
+    _streamDebounce=setTimeout(function(){
+        _streamDebounce=null;
+        _doStreamMatch();
+    },800);
 });
 
 eventSource.on(event_types.GENERATION_STOPPED,function(){_resetPreGen();});

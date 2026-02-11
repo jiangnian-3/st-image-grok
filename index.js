@@ -447,11 +447,17 @@ async function createSettings(html){
 // ==================== Init ====================
 function onBtn(){var d=$('#extensions-settings-button .drawer-toggle');if($('#rm_extensions_block').hasClass('closedDrawer'))d.trigger('click');setTimeout(function(){var c=$('#grok_imagine_container');if(c.length){$('#rm_extensions_block').animate({scrollTop:c.offset().top-$('#rm_extensions_block').offset().top+$('#rm_extensions_block').scrollTop()},500);var dc=c.find('.inline-drawer-content'),dh=c.find('.inline-drawer-header');if(dc.is(':hidden')&&dh.length)dh.trigger('click');}},500);}
 $(function(){(async function(){
+    try{console.log('[grok] FOLDER='+FOLDER);
+    console.log('[grok] meta.url='+import.meta.url);
     var html=await $.get(FOLDER+'/settings.html');
+    console.log('[grok] HTML loaded len='+html.length);
     $('#extensionsMenu').append('<div id="grok_auto_gen_btn" class="list-group-item flex-container flexGap5"><div class="fa-solid fa-image"></div><span>Grok Imagine</span></div>');
     $('#grok_auto_gen_btn').off('click').on('click',onBtn);
     await loadSettings();await createSettings(html);
-    addLog('v2.2.0');setTimeout(function(){startObs();wrapAll();},500);
+    console.log('[grok] presets='+JSON.stringify(Object.keys(getAllP())));
+    console.log('[grok] customPresets='+JSON.stringify(Object.keys(extension_settings[EXT].customPresets||{})));
+    addLog('v2.5.1 FOLDER='+FOLDER);toastr.info('预设: '+Object.keys(getAllP()).join(', '));setTimeout(function(){startObs();wrapAll();},500);
+    }catch(e){console.error('[grok] INIT FAIL:',e);}
 })();});
 
 // ==================== Injection ====================

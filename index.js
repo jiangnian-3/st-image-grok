@@ -3,7 +3,7 @@ import { saveSettingsDebounced, eventSource, event_types, updateMessageBlock, ge
 import { appendMediaToMessage } from '../../../../script.js';
 import { regexFromString } from '../../../utils.js';
 
-var EXT='st-grok-imagine';var FOLDER='/scripts/extensions/third-party/'+EXT;try{var _t=await fetch('/scripts/extensions/third-party/st-image-grok/manifest.json',{method:'HEAD'});if(_t.ok)FOLDER='/scripts/extensions/third-party/st-image-grok';}catch(e){}
+var EXT='st-grok-imagine';var FOLDER=new URL('.',import.meta.url).pathname.replace(/\/$/,'')
 var IT={DISABLED:'disabled',INLINE:'inline',REPLACE:'replace'};
 var TF={pic:{regex:'/<pic[^>]*\\sprompt="([^"]*)"[^>]*?>/g'},image:{regex:'/(?:<image>\\s*)?image###([\\s\\S]*?)###(?:\\s*<\\/image>)?/g'}};
 var PRESETS={anime:{name:'anime',label:'\u52a8\u6f2b\u7cbe\u81f4',

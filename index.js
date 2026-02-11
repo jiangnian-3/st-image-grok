@@ -149,126 +149,55 @@ function showImageManager(){
     var s=extension_settings[EXT];
     var logs=(s.imageLog||[]).slice().reverse();
     var sel=new Set();
-    
-        var ov=$('<div id="grok-imgmgr" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.92);z-index:200001;display:flex;flex-direction:column;padding:0;margin:0;overflow:hidden;"></div>');
-    
-    // Header
-    var hdr=$('<div></div>').css({
-        display:'flex',alignItems:'center',justifyContent:'space-between',
-        padding:'12px 16px',borderBottom:'1px solid #333',flexShrink:0
-    });
-    hdr.append($('<h3></h3>').text('图片管理 ('+logs.length+')').css({margin:0,color:'#ccc',fontSize:'16px'}));
+    var PAGE=12,page=0,totalPages=Math.max(1,Math.ceil(logs.length/PAGE));
+    var ov=$('<div id="grok-imgmgr" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.92);z-index:200001;display:flex;flex-direction:column;"></div>');
+    var hdr=$('<div></div>').css({display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 16px',borderBottom:'1px solid #333',flexShrink:0});
+    hdr.append($('<h3 id="grok-mgr-title"></h3>').text('图片管理 ('+logs.length+')').css({margin:0,color:'#ccc',fontSize:'16px'}));
     var closeBtn=$('<button>✕</button>').css({background:'none',border:'none',color:'#ccc',fontSize:'20px',cursor:'pointer'});
     closeBtn.on('click',function(){ov.remove();});
     hdr.append(closeBtn);ov.append(hdr);
-    
-    // Grid
-    var grid=$('<div id="grok-imgmgr-grid"></div>').css({
-        flex:1,overflowY:'auto',padding:'8px',
-        display:'grid',gridTemplateColumns:'repeat(3,1fr)',
-        gap:'6px',alignContent:'start'
-    });
-    
-    if(!logs.length){
-        grid.append($('<div></div>').css({gridColumn:'1/-1',textAlign:'center',color:'#888',padding:'40px 0',fontSize:'14px'}).text('暂无缓存图片'));
-    }
-    for(var i=0;i<logs.length;i++){
-        (function(idx,item){
-            var card=$('<div class="grok-mgr-card"></div>').css({
-                position:'relative',borderRadius:'8px',overflow:'hidden',
-                background:'#1a1a1a',aspectRatio:'1',cursor:'pointer'
-            }).attr('data-idx',idx);
-            
-            var img=$('<img>').attr('src',item.path).css({
-                width:'100%',height:'100%',objectFit:'cover',display:'block'
-            });
+    var grid=$('<div id="grok-imgmgr-grid"></div>').css({flex:1,overflowY:'auto',padding:'8px',display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'6px',alignContent:'start'});
+    ov.append(grid);
+    var pager=$('<div></div>').css({display:'flex',alignItems:'center',justifyContent:'center',gap:'16px',padding:'8px',borderTop:'1px solid #333',flexShrink:0});
+    var prevBtn=$('<button>\u25C0</button>').css({padding:'8px 16px',borderRadius:'8px',border:'none',background:'rgba(255,255,255,0.12)',color:'#ccc',fontSize:'14px',cursor:'pointer'});
+    var pageText=$('<span></span>').css({color:'#ccc',fontSize:'13px',minWidth:'60px',textAlign:'center'});
+    var nextBtn=$('<button>\u25B6</button>').css({padding:'8px 16px',borderRadius:'8px',border:'none',background:'rgba(255,255,255,0.12)',color:'#ccc',fontSize:'14px',cursor:'pointer'});
+    pager.append(prevBtn).append(pageText).append(nextBtn);
+    ov.append(pager);
+    function renderPage(){
+        grid.empty();grid.scrollTop(0);
+        var start=page*PAGE,end=Math.min(start+PAGE,logs.length);
+        pageText.text((page+1)+'/'+totalPages);
+        prevBtn.css('opacity',page>0?1:0.3);
+        nextBtn.css('opacity',page<totalPages-1?1:0.3);
+        if(!logs.length){grid.append($('<div></div>').css({gridColumn:'1/-1',textAlign:'center',color:'#888',padding:'40px 0'}).text('暂无缓存图片'));return;}
+        for(var i=start;i<end;i++){(function(idx,item){
+            var card=$('<div class="grok-mgr-card"></div>').css({position:'relative',borderRadius:'8px',overflow:'hidden',background:'#1a1a1a',aspectRatio:'1',cursor:'pointer'});
+            var img=$('<img>').attr('src',item.path).attr('loading','lazy').css({width:'100%',height:'100%',objectFit:'cover',display:'block'});
             img.on('error',function(){$(this).replaceWith($('<div></div>').css({width:'100%',height:'100%',display:'flex',alignItems:'center',justifyContent:'center',color:'#555',fontSize:'11px'}).text('已删除'));});
-            
-            var cb=$('<div class="grok-mgr-cb"></div>').css({
-                position:'absolute',top:'4px',right:'4px',width:'24px',height:'24px',
-                borderRadius:'50%',border:'2px solid rgba(255,255,255,0.6)',
-                background:'rgba(0,0,0,0.4)',display:'flex',alignItems:'center',
-                justifyContent:'center',fontSize:'14px',color:'#fff',zIndex:2
-            });
-            
-            var info=$('<div></div>').css({
-                position:'absolute',bottom:0,left:0,right:0,
-                background:'linear-gradient(transparent,rgba(0,0,0,0.7))',
-                padding:'4px 6px',fontSize:'10px',color:'#aaa'
-            }).text(new Date(item.time).toLocaleDateString());
-            
-            // Click checkbox area -> toggle select
-            cb.on('click touchend',function(e){
-                e.stopPropagation();e.preventDefault();
-                if(sel.has(idx)){sel.delete(idx);$(this).text('').css({background:'rgba(0,0,0,0.4)',border:'2px solid rgba(255,255,255,0.6)'});}
-                else{sel.add(idx);$(this).text('✓').css({background:'#4a9eff',border:'2px solid #4a9eff'});}updBar();
-            });
-            
-            // Click image -> fullscreen preview
-            card.on('click touchend',function(e){
-                if($(e.target).closest('.grok-mgr-cb').length)return;
-                e.preventDefault();
-                showFullImg(item.path);
-            });
-            
-            card.append(img);card.append(cb);card.append(info);
-            grid.append(card);
-        })(i,logs[i]);
-    }ov.append(grid);
-    
-    // Bottom bar
-    var bar=$('<div id="grok-imgmgr-bar"></div>').css({
-        display:'flex',alignItems:'center',gap:'8px',
-        padding:'10px 12px',borderTop:'1px solid #333',
-        flexShrink:0,flexWrap:'wrap',justifyContent:'center'
-    });
+            var cb=$('<div class="grok-mgr-cb"></div>').css({position:'absolute',top:'4px',right:'4px',width:'24px',height:'24px',borderRadius:'50%',border:'2px solid rgba(255,255,255,0.6)',background:'rgba(0,0,0,0.4)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'14px',color:'#fff',zIndex:2});
+            if(sel.has(idx))cb.text('\u2713').css({background:'#4a9eff',border:'2px solid #4a9eff'});
+            var info=$('<div></div>').css({position:'absolute',bottom:0,left:0,right:0,background:'linear-gradient(transparent,rgba(0,0,0,0.7))',padding:'4px 6px',fontSize:'10px',color:'#aaa'}).text(new Date(item.time).toLocaleDateString());
+            cb.on('click touchend',function(e){e.stopPropagation();e.preventDefault();if(sel.has(idx)){sel.delete(idx);$(this).text('').css({background:'rgba(0,0,0,0.4)',border:'2px solid rgba(255,255,255,0.6)'});}else{sel.add(idx);$(this).text('\u2713').css({background:'#4a9eff',border:'2px solid #4a9eff'});}updBar();});
+            card.on('click touchend',function(e){if($(e.target).closest('.grok-mgr-cb').length)return;e.preventDefault();showFullImg(item.path);});
+            card.append(img).append(cb).append(info);grid.append(card);
+        })(i,logs[i]);}
+    }
+    prevBtn.on('click',function(){if(page>0){page--;renderPage();}});
+    nextBtn.on('click',function(){if(page<totalPages-1){page++;renderPage();}});
+    var bar=$('<div id="grok-imgmgr-bar"></div>').css({display:'flex',alignItems:'center',gap:'8px',padding:'10px 12px',borderTop:'1px solid #333',flexShrink:0,flexWrap:'wrap',justifyContent:'center'});
     var selAllBtn=$('<button>全选</button>').css({padding:'8px 14px',borderRadius:'8px',border:'none',background:'rgba(255,255,255,0.12)',color:'#ccc',fontSize:'13px',cursor:'pointer'});
     var dlBtn=$('<button>下载</button>').css({padding:'8px 14px',borderRadius:'8px',border:'none',background:'#2d7d46',color:'#fff',fontSize:'13px',cursor:'pointer'});
     var delBtn=$('<button>删除</button>').css({padding:'8px 14px',borderRadius:'8px',border:'none',background:'#c0392b',color:'#fff',fontSize:'13px',cursor:'pointer'});
     var countTxt=$('<span></span>').css({color:'#888',fontSize:'12px'}).text('已选 0');
     function updBar(){countTxt.text('已选 '+sel.size);}
-    
-    selAllBtn.on('click',function(){
-        if(sel.size===logs.length){sel.clear();grid.find('.grok-mgr-cb').text('').css({background:'rgba(0,0,0,0.4)',border:'2px solid rgba(255,255,255,0.6)'});}
-        else{for(var j=0;j<logs.length;j++)sel.add(j);grid.find('.grok-mgr-cb').text('✓').css({background:'#4a9eff',border:'2px solid #4a9eff'});}
-        updBar();
-    });
-    
-    dlBtn.on('click',async function(){
-        if(!sel.size){toastr.warning('未选择');return;}
-        var cnt=0;
-        sel.forEach(function(idx){
-            var item=logs[idx];if(!item)return;
-            var a=document.createElement('a');a.href=item.path;a.download=item.path.split('/').pop();
-            document.body.appendChild(a);a.click();document.body.removeChild(a);cnt++;
-        });
-        toastr.success('下载 '+cnt+' 张');});
-    
-    delBtn.on('click',async function(){
-        if(!sel.size){toastr.warning('未选择');return;}
-        if(!confirm('确认删除 '+sel.size+' 张图片？'))return;
-        delBtn.prop('disabled',true).text('删除中...');
-        var ok=0,idxArr=Array.from(sel).sort(function(a,b){return b-a;});
-        for(var k=0;k<idxArr.length;k++){
-            var item=logs[idxArr[k]];if(!item)continue;
-            try{
-                var r=await fetch('/api/images/delete',{method:'POST',headers:getRequestHeaders(),body:JSON.stringify({path:item.path})});
-                if(r.ok)ok++;
-            }catch(e){}
-            var realIdx=s.imageLog.length-1-idxArr[k];
-            if(realIdx>=0)s.imageLog.splice(realIdx,1);}
-        saveSettingsDebounced();
-        toastr.success('已删除 '+ok+' 张');
-        ov.remove();
-        showImageManager();
-    });
-    
-    bar.append(selAllBtn);bar.append(dlBtn);bar.append(delBtn);bar.append(countTxt);
+    selAllBtn.on('click',function(){if(sel.size===logs.length){sel.clear();}else{for(var j=0;j<logs.length;j++)sel.add(j);}renderPage();updBar();});
+    dlBtn.on('click',function(){if(!sel.size){toastr.warning('未选择');return;}var cnt=0;sel.forEach(function(idx){var item=logs[idx];if(!item)return;var a=document.createElement('a');a.href=item.path;a.download=item.path.split('/').pop();document.body.appendChild(a);a.click();document.body.removeChild(a);cnt++;});toastr.success('下载 '+cnt+' 张');});
+    delBtn.on('click',async function(){if(!sel.size){toastr.warning('未选择');return;}if(!confirm('确认删除 '+sel.size+' 张？'))return;delBtn.prop('disabled',true).text('删除中...');var ok=0,idxArr=Array.from(sel).sort(function(a,b){return b-a;});for(var k=0;k<idxArr.length;k++){var item=logs[idxArr[k]];if(!item)continue;try{var r=await fetch('/api/images/delete',{method:'POST',headers:getRequestHeaders(),body:JSON.stringify({path:item.path})});if(r.ok)ok++;}catch(e){}var realIdx=s.imageLog.length-1-idxArr[k];if(realIdx>=0)s.imageLog.splice(realIdx,1);}saveSettingsDebounced();toastr.success('已删除 '+ok+' 张');ov.remove();showImageManager();});
+    bar.append(selAllBtn).append(dlBtn).append(delBtn).append(countTxt);
     ov.append(bar);
-        $('body').append(ov);
-    addLog('imgmgr appended, exists='+$('#grok-imgmgr').length+' zIndex='+$('#grok-imgmgr').css('z-index')+' h='+$('#grok-imgmgr').height());
-    toastr.info('图片管理已打开 '+logs.length+'张');
-}catch(e){addLog('imgmgr ERR:'+e.message);toastr.error('imgmgr:'+e.message);}
+    $('body').append(ov);renderPage();
+    }catch(e){addLog('imgmgr ERR:'+e.message);toastr.error('imgmgr:'+e.message);}
 }
 
 function showFullImg(src){
@@ -468,7 +397,7 @@ eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY,async function(ev){try{v
 eventSource.on(event_types.MESSAGE_RECEIVED,handleMsg);
 async function handleMsg(){
     var _savedPG=Object.assign({},_preGens);var _wasPG=_preGenActive;
-    _streamBuf='';_preGenActive=false;_preGens={};
+    _streamBuf='';_preGenActive=false;_preGens={};_streamLastLen=0;
     var s=extension_settings[EXT];if(!s||s.insertType===IT.DISABLED)return;
     if(_wasPG)addLog('\u26a1msg received, '+Object.keys(_savedPG).length+' pre-gens available');
     var ctx=getContext(),mesIdx=ctx.chat.length-1,msg=ctx.chat[mesIdx];
@@ -541,11 +470,12 @@ async function handleMsg(){
 var _streamBuf='';
 var _preGens={};
 var _preGenActive=false;
+var _streamLastLen=0;
 
 function _resetPreGen(){
     var keys=Object.keys(_preGens);
     if(keys.length>0)addLog('pre-gen reset, had '+keys.length+' entries');
-    _streamBuf='';_preGens={};_preGenActive=false;
+    _streamBuf='';_preGens={};_preGenActive=false;_streamLastLen=0;
 }
 
 eventSource.on(event_types.STREAM_TOKEN_RECEIVED,function(data){
@@ -554,7 +484,7 @@ eventSource.on(event_types.STREAM_TOKEN_RECEIVED,function(data){
     _preGenActive=true;
     var tok=(typeof data==='string')?data:(data&&data.token?data.token:'');
     if(!tok)return;
-    _streamBuf=(tok.length>_streamBuf.length+50)?tok:(_streamBuf+tok);
+    _streamBuf=(tok.length>_streamBuf.length+50)?tok:(_streamBuf+tok);if(_streamBuf.length-_streamLastLen<40)return;_streamLastLen=_streamBuf.length;
     var rxStr=s.promptInjection.regex;if(!rxStr)return;
     var rx;try{rx=regexFromString(rxStr);}catch(e){return;}
     var isIF=(s.tagFormat==='image');
